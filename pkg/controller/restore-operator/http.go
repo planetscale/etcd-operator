@@ -94,9 +94,10 @@ func (r *Restore) serveBackup(w http.ResponseWriter, req *http.Request) error {
 		}
 
 		cfg := s3factory.ClientConfig{
-			Endpoint:  s3RestoreSource.Endpoint,
-			Namespace: r.namespace,
-			AWSSecret: s3RestoreSource.AWSSecret,
+			Endpoint:       s3RestoreSource.Endpoint,
+			Namespace:      r.namespace,
+			AWSSecret:      s3RestoreSource.AWSSecret,
+			ForcePathStyle: s3RestoreSource.ForcePathStyle,
 		}
 		s3Cli, err := s3factory.NewClient(cfg, r.kubecli)
 

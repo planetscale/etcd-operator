@@ -24,6 +24,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/minio/minio-go/pkg/s3utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
@@ -42,9 +43,10 @@ type S3Client struct {
 
 // ClientConfig is the configuration for a S3 client.
 type ClientConfig struct {
-	Endpoint  string
-	Namespace string
-	AWSSecret string
+	Endpoint       string
+	Namespace      string
+	AWSSecret      string
+	ForcePathStyle bool
 }
 
 // NewClient returns a new S3Client. This client can be based on profiles, keys...
@@ -56,7 +58,7 @@ func NewClient(cfg ClientConfig, kubecli kubernetes.Interface) (*S3Client, error
 		return newClientForIAMRole(cfg.Endpoint)
 	}
 
-	return newClientFromSecret(kubecli, cfg.Namespace, cfg.Endpoint, cfg.AWSSecret)
+	return newClientFromSecret(kubecli, cfg.Namespace, cfg.Endpoint, cfg.AWSSecret, cfg.ForcePathStyle)
 }
 
 // newClientForIAMRole returns a S3 client that doesn't have credentials set and will do that
@@ -81,7 +83,7 @@ func newClientForIAMRole(endpoint string) (w *S3Client, err error) {
 
 		config.Endpoint = aws.String(endpoint)
 	}
-	sess, err := session.NewSession(config)
+	sess, err := session.NewSession(&config)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +94,7 @@ func newClientForIAMRole(endpoint string) (w *S3Client, err error) {
 }
 
 // newClientFromSecret returns a S3 client based on given k8s secret containing aws credentials.
-func newClientFromSecret(kubecli kubernetes.Interface, namespace, endpoint, awsSecret string) (w *S3Client, err error) {
+func newClientFromSecret(kubecli kubernetes.Interface, namespace, endpoint, awsSecret string, forcePathStyle bool) (w *S3Client, err error) {
 	defer func() {
 		if err != nil {
 			err = fmt.Errorf("new S3 client failed: %v", err)

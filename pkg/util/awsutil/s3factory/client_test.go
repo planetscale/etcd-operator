@@ -17,7 +17,7 @@ package s3factory
 import (
 	"testing"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes/fake"
 )
 
@@ -57,12 +57,12 @@ func TestS3ClientForIAMRoles(t *testing.T) {
 			cfg: ClientConfig{
 				Endpoint: "s3.amazonaws.com",
 			},
-			expErr: true,
+			expErr: false,
 		},
 		{
 			name:   "A configuration without AWS secret and no endpoint, should return a error.",
 			cfg:    ClientConfig{},
-			expErr: true,
+			expErr: false,
 		},
 	}
 

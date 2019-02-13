@@ -33,9 +33,10 @@ func handleS3(ctx context.Context, kubecli kubernetes.Interface, s *api.S3Backup
 	namespace string, isPeriodic bool, maxBackup int) (*api.BackupStatus, error) {
 	// TODO: controls NewClientFromSecret with ctx. This depends on upstream kubernetes to support API calls with ctx.
 	cfg := s3factory.ClientConfig{
-		Endpoint:  s.Endpoint,
-		Namespace: namespace,
-		AWSSecret: s.AWSSecret,
+		Endpoint:       s.Endpoint,
+		Namespace:      namespace,
+		AWSSecret:      s.AWSSecret,
+		ForcePathStyle: s.ForcePathStyle,
 	}
 	cli, err := s3factory.NewClient(cfg, kubecli)
 
