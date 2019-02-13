@@ -1,9 +1,12 @@
 ## [Unreleased]
 
+**BREAKING CHANGE**: Internal breaking change on S3 client factory (`util/awsutil/s3factory`), `NewClientFromSecret` no longer exists in favor of `NewClient`.
+
 ### Added
 
 - Added `spec.BackupSource.S3.ForcePathStyle` to `EtcdBackup` to force path style s3 uploads. [#2036](https://github.com/coreos/etcd-operator/pull/2036)
 - Added `spec.RestoreSource.S3.ForcePathStyle` to `EtcdRestore` to force path style s3 downloads. [#2036](https://github.com/coreos/etcd-operator/pull/2036)
+- Added support for S3 backup and restore without credentials using IAM roles.
 
 ### Changed
 
@@ -96,25 +99,24 @@ Same as v0.8.4. The version is bumping to 0.9.0 due to adding a new ABS backup A
 ### Changed
 
 - Changed etcd pod member names to be unique by having a random suffix instead of a sequence number. This change is backward compatible and should not affect operator upgrade.
-    Previously the etcd pod names would look like:
-    ```
-    NAME                            READY     STATUS    RESTARTS   AGE
-    example-etcd-cluster-0000       1/1       Running   0          1m
-    example-etcd-cluster-0001       1/1       Running   0          1m
-    example-etcd-cluster-0002       1/1       Running   0          1m
-    ```
-    After this change:
-    ```
-    NAME                                  READY     STATUS    RESTARTS   AGE
-    example-etcd-cluster-2885zjw9he       1/1       Running   0          1m
-    example-etcd-cluster-gghrmbeid4       1/1       Running   0          1m
-    example-etcd-cluster-w5q9sn37fd       1/1       Running   0          1m
-    ```
+  Previously the etcd pod names would look like:
+  ```
+  NAME                            READY     STATUS    RESTARTS   AGE
+  example-etcd-cluster-0000       1/1       Running   0          1m
+  example-etcd-cluster-0001       1/1       Running   0          1m
+  example-etcd-cluster-0002       1/1       Running   0          1m
+  ```
+  After this change:
+  ```
+  NAME                                  READY     STATUS    RESTARTS   AGE
+  example-etcd-cluster-2885zjw9he       1/1       Running   0          1m
+  example-etcd-cluster-gghrmbeid4       1/1       Running   0          1m
+  example-etcd-cluster-w5q9sn37fd       1/1       Running   0          1m
+  ```
 
 ### Fixed
 
 - Fixed a bug where the restore operator would fail to restore the seed member because recreating an etcd pod with the same name as a recently deleted one would conflict as the older pod and its resources, like the DNS name, might still not be deleted. [#1825](https://github.com/coreos/etcd-operator/issues/1825)
-
 
 ## [Release 0.8.2]
 
@@ -126,7 +128,6 @@ Same as v0.8.4. The version is bumping to 0.9.0 due to adding a new ABS backup A
 
 - All etcd pod containers now run as non-root.
 
-
 ## [Release 0.8.1]
 
 ### Changed
@@ -136,7 +137,6 @@ Same as v0.8.4. The version is bumping to 0.9.0 due to adding a new ABS backup A
 ### Fixed
 
 - Fix etcd-restore-operator wouldn't report error and keep looping if EtcdRestore name is different than EtcdCluster name.
-
 
 ## [Release 0.8.0]
 
@@ -168,7 +168,6 @@ Please follow the latest backup/restore CR definition for future backup and rest
 
 - EtcdBackup: BackupSpec removed ClusterName field in favor of etcd endpoints.
 - EtcdCluster: ClusterSpec removed deprecated BaseImage field.
-
 
 ## [Release 0.7.2]
 
@@ -211,7 +210,6 @@ We'd better use quay.io and keep it compatible to work for 3.1 versions of etcd.
 
 - All operator images by default uses user `etcd-operator` instead of root.
 
-
 ## [Release 0.7.0]
 
 Existing backup and restore features in EtcdCluster API won’t be supported after 0.7.0 release.
@@ -231,7 +229,6 @@ If applicable then see the [upgrade guide](./doc/user/upgrade/upgrade_guide.md) 
 - Remove etcd cluster Backup feature from etcd operator.
 - Remove etcd cluster Restore from etcd operator.
 
-
 ## [Release 0.6.1]
 
 The operator will no longer create a storage class specified by `--pv-provisioner` by default. If applicable then see the [upgrade guide](./doc/user/upgrade/upgrade_guide.md) on how to upgrade from `v0.6.0` to `v0.6.1` .
@@ -239,7 +236,7 @@ The operator will no longer create a storage class specified by `--pv-provisione
 ### Added
 
 - backup binary supports serving backup defined by backupSpec. In addition, when backupSpec
-is specified, backup binary changes to serve http backup requests only mode.
+  is specified, backup binary changes to serve http backup requests only mode.
 - Add operator flag `--create-crd`. By default it is `true` and operator will create EtcdCluster CRD.
   It can be set to `false` and operator won't create EtcdCluster CRD.
 - Add operator flag `--create-storage-class`. By default it is `false` and operator won't create default storage class.
@@ -256,7 +253,6 @@ is specified, backup binary changes to serve http backup requests only mode.
 ### Deprecated
 
 - The operator flag `--pv-provisioner` is depercated. We recommend to use per cluster storageClass.
-
 
 ## [Release 0.6.0]
 
@@ -275,7 +271,6 @@ is specified, backup binary changes to serve http backup requests only mode.
 - Remove operator level S3 flag.
 - Remove analytics flag. Disable Google analytics.
 
-
 ## [Release 0.5.2]
 
 ### Added
@@ -288,7 +283,6 @@ is specified, backup binary changes to serve http backup requests only mode.
 ### Deprecated
 
 - Deprecate operator S3 flag. Add warning note for using it in this release. The flag will be removed in 0.6.0 release.
-
 
 ## [Release 0.5.1]
 
@@ -311,7 +305,6 @@ Finally, it is safe to upgrade operator. It's highly recommended to save a backu
 - Fix periodFullGC only executed once problem.
 - [GH-1021] Use the cluster domain provided by kubelet instead of hardcoded `.cluster.local` .
 
-
 ## [Release 0.5.0]
 
 **BREAKING CHANGE**: The cluster object will now be defined via a [Custom Resource Definition(CRD)](https://kubernetes.io/docs/tasks/access-kubernetes-api/extend-api-custom-resource-definitions/) instead of a [Third Party Resource(TPR)](https://kubernetes.io/docs/tasks/access-kubernetes-api/extend-api-third-party-resource/). See the `Changed` section below for details.
@@ -323,7 +316,6 @@ Finally, it is safe to upgrade operator. It's highly recommended to save a backu
 - Changes in the cluster object's type metadata:
   - The `apiVersion` field has been changed from `etcd.coreos.com/v1beta1` to `etcd.database.coreos.com/v1beta2`
   - The `kind` field has been changed from `Cluster` to `EtcdCluster`
-
 
 ## [Release 0.4.2]
 
@@ -339,7 +331,6 @@ Finally, it is safe to upgrade operator. It's highly recommended to save a backu
 
 - Fix append-hosts init-container not run on some restart cases.
 
-
 ## [Release 0.4.1]
 
 This is a bug-fix release. We have done a lot of testing against k8s 1.7
@@ -354,15 +345,16 @@ and making it stable on 1.7 .
 
 - Make sure etcd pod's FQDN is resolvable before running etcd commands .
 
-
 ## [Release 0.4.0]
 
 **BREAKING CHANGE**: Re-naming of TLS spec and TLS secrets' fields.
 
 TLS spec:
+
 - member's `clientSecret` is changed to `serverSecret`
 
 TLS secrets:
+
 - member's `peerSecret`'s fields change:
   - peer-crt.pem -> peer.crt
   - peer-key.pem -> peer.key
@@ -375,7 +367,6 @@ TLS secrets:
   - etcd-crt.pem -> etcd-client.crt
   - etcd-key.pem -> etcd-client.key
   - etcd-ca-crt.pem -> etcd-client-ca.crt
-
 
 **BREAKING CHANGE**: Backup spec: `CleanupBackupsOnClusterDelete` field is renamed to `AutoDelete`.
 
@@ -399,7 +390,6 @@ spec:
     autoDelete: true
 ```
 
-
 ## [Release 0.3.3]
 
 ### Added
@@ -412,13 +402,11 @@ spec:
 - [GH-1138] Fixed operator stucks in managing selfhosted cluster when there are not enough nodes to start new etcd member.
 - [GH-1196] Fixed etcd operator could not start S3 backup sidecar if given non-root user.
 
-
 ## [Release 0.3.2]
 
 Bug fix release to fix self-hosted etcd issue [GH-1171] .
 
 ## [Release 0.3.1]
-
 
 **Notes for self-hosted etcd**:
 The newly introduced TLS feature for self hosted etcd is a breaking change.
@@ -450,7 +438,6 @@ Existing self hosted etcd cluster MUST be recreated for updating to this release
 
 ### Security
 
-
 ## [Release 0.3.0]
 
 ### Upgrade Notice
@@ -476,7 +463,6 @@ Check https://github.com/coreos/etcd-operator/blob/master/doc/user/upgrade/upgra
 ### Deprecated
 
 ### Security
-
 
 ## [Release 0.2.6]
 
@@ -510,7 +496,6 @@ Check https://github.com/coreos/etcd-operator/blob/master/doc/user/upgrade/upgra
 ### Deprecated
 
 ### Security
-
 
 ## [Release 0.2.5]
 
@@ -546,7 +531,6 @@ Check https://github.com/coreos/etcd-operator/blob/master/doc/user/upgrade/upgra
 
 ### Security
 
-
 ## [Release 0.2.4]
 
 ### Added
@@ -562,7 +546,6 @@ Check https://github.com/coreos/etcd-operator/blob/master/doc/user/upgrade/upgra
 ### Deprecated
 
 ### Security
-
 
 ## [Release 0.2.3]
 
@@ -580,7 +563,6 @@ Check https://github.com/coreos/etcd-operator/blob/master/doc/user/upgrade/upgra
 ### Deprecated
 
 ### Security
-
 
 ## [Release 0.2.2]
 
@@ -607,15 +589,15 @@ Check https://github.com/coreos/etcd-operator/blob/master/doc/user/upgrade/upgra
 
 ### Security
 
-
 ## [Release 0.2.1]
+
 ### Added
 
 - Experimental client for interacting with backup service
 - The operator panics itself when it gets stuck unexpectedly. It relies on Kubernetes to
-get restarted.
+  get restarted.
 - Add resource requirements field in `Spec.Pod` . Users can specify resource requirements for the
-etcd container with this new field.
+  etcd container with this new field.
 - Add status endpoint to backup sidecar service.
 - Service account of the etcd operator pod is passed to backup pod.
 - Add backup service status into cluster status.

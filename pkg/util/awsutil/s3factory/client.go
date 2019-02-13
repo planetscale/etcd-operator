@@ -17,15 +17,17 @@ package s3factory
 import (
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"path"
 
-	api "github.com/coreos/etcd-operator/pkg/apis/etcd/v1beta2"
-
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+
+	api "github.com/coreos/etcd-operator/pkg/apis/etcd/v1beta2"
 )
 
 const (
@@ -38,8 +40,59 @@ type S3Client struct {
 	configDir string
 }
 
-// NewClientFromSecret returns a S3 client based on given k8s secret containing aws credentials.
-func NewClientFromSecret(kubecli kubernetes.Interface, namespace, endpoint, awsSecret string, forcePathStyle bool) (w *S3Client, err error) {
+// ClientConfig is the configuration for a S3 client.
+type ClientConfig struct {
+	Endpoint  string
+	Namespace string
+	AWSSecret string
+}
+
+// NewClient returns a new S3Client. This client can be based on profiles, keys...
+// (from secret), or IAM Role based (nodes, Kube2iam, Kiam...), the client
+// type will be inferred based on ClientConfig.
+func NewClient(cfg ClientConfig, kubecli kubernetes.Interface) (*S3Client, error) {
+	// If credentials not required then use the S3 client based on IAM roles.
+	if cfg.AWSSecret == "" {
+		return newClientForIAMRole(cfg.Endpoint)
+	}
+
+	return newClientFromSecret(kubecli, cfg.Namespace, cfg.Endpoint, cfg.AWSSecret)
+}
+
+// newClientForIAMRole returns a S3 client that doesn't have credentials set and will do that
+// AWS S3 client fallback to machines assigned IAM role (or in case of using Kube2iam, Kiam...,
+// use the methods on behalf of the assumed roles given by these systems).
+func newClientForIAMRole(endpoint string) (w *S3Client, err error) {
+	defer func() {
+		if err != nil {
+			err = fmt.Errorf("new S3 client failed: %v", err)
+		}
+	}()
+
+	config := aws.Config{}
+	if endpoint != "" {
+		// Get the region based on the endpoint.
+		region := s3utils.GetRegionFromURL(url.URL{
+			Host: endpoint,
+		})
+		if region != "" {
+			config.Region = aws.String(region)
+		}
+
+		config.Endpoint = aws.String(endpoint)
+	}
+	sess, err := session.NewSession(config)
+	if err != nil {
+		return nil, err
+	}
+
+	return &S3Client{
+		S3: s3.New(sess),
+	}, nil
+}
+
+// newClientFromSecret returns a S3 client based on given k8s secret containing aws credentials.
+func newClientFromSecret(kubecli kubernetes.Interface, namespace, endpoint, awsSecret string) (w *S3Client, err error) {
 	defer func() {
 		if err != nil {
 			err = fmt.Errorf("new S3 client failed: %v", err)
@@ -73,7 +126,7 @@ func setupAWSConfig(kubecli kubernetes.Interface, ns, secret, endpoint, configDi
 	options.SharedConfigState = session.SharedConfigEnable
 
 	// empty string defaults to aws
-	options.Config.Endpoint = &endpoint
+	options.Config.Endpoint = aws.String(endpoint)
 
 	options.Config.S3ForcePathStyle = &forcePathStyle
 
