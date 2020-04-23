@@ -365,6 +365,7 @@ func newEtcdPod(m *etcdutil.Member, initialCluster []string, clusterName, state,
 			Annotations: map[string]string{},
 		},
 		Spec: v1.PodSpec{
+			PriorityClassName: "ps-basic-infrastructure",
 			InitContainers: []v1.Container{{
 				// busybox:latest uses uclibc which contains a bug that sometimes prevents name resolution
 				// More info: https://github.com/docker-library/busybox/issues/27
